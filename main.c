@@ -248,6 +248,8 @@ int main()
 
 //gcc main.c -lncurses
 
+//resources:
+
 //Rotation of matrix:
 //https://www.enjoyalgorithms.com/blog/cr-a-matrix-by-90-degrees-in-an-anticlockwise-direction
 //Random Int:
