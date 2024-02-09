@@ -3,8 +3,6 @@
 #include <time.h>
 #include <stdlib.h>
 
-
-
 //globals
 const int nWidth = 10;
 const int nHeight = 20;
