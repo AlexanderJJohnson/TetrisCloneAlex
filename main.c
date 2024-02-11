@@ -10,8 +10,6 @@
 #include <time.h>
 #include <stdlib.h>
 
-
-
 //globals
 const int nWidth = 10;
 const int nHeight = 20;
@@ -20,22 +18,52 @@ int nTempField[20][10] = {0};
 char cKeyPress;
 bool bRotate = 0;
 
+
 // Shape implementation [block ID][4 blocks]:
-int shapes[7][4] = 
+int shapes[7][4][4] = 
 {
-   1,3,5,7, //I
-   2,4,5,7, //Z
-   3,5,4,6, //S
-   3,5,4,7, //T
-   2,3,5,7, //L
-   3,5,7,6, //J
-   2,3,4,5  //O
+   //I
+   {{0,0,1,0},
+    {0,0,1,0},
+    {0,0,1,0},
+    {0,0,1,0}},
+   //Z
+   {{0,0,1,0},
+    {0,1,1,0},
+    {0,1,0,0},
+    {0,0,0,0}},
+   //S
+   {{0,1,0,0},
+    {0,1,1,0},
+    {0,0,1,0},
+    {0,0,0,0}},
+   //T
+   {{0,1,0,0},
+    {0,1,1,0},
+    {0,1,0,0},
+    {0,0,0,0}},
+   //L
+   {{0,1,0,0},
+    {0,1,0,0},
+    {0,1,1,0},
+    {0,0,0,0}},
+   //J
+   {{0,0,1,0},
+    {0,0,1,0},
+    {0,1,1,0},
+    {0,0,0,0}},
+   //O
+   {{0,0,0,0},
+    {0,1,1,0},
+    {0,1,1,0},
+    {0,0,0,0}},
+
 };
 
 struct point
 {
    int x, y;
-}nCurrentPoint[4], nRotatedPoint[4], nAxis;
+}nCurrentPoint[4][4], nAxis;
 
 void setField(WINDOW *wCurrent)
 {
@@ -60,46 +88,52 @@ void setField(WINDOW *wCurrent)
 //compute the location of the cells in a selected shape
 void spawn(int sel)
 {
+   // for (int i = 0; i < 4; i++)
+   // {
+   //    nCurrentPoint[i].x = (shapes[sel][i] % 2) + 4;
+   //    nCurrentPoint[i].y = shapes[sel][i] / 2;
+   //    nTempField[nCurrentPoint[i].y][nCurrentPoint[i].x] = 1;
+   // }
    for (int i = 0; i < 4; i++)
-   {
-      nCurrentPoint[i].x = (shapes[sel][i] % 2) + 4;
-      nCurrentPoint[i].y = shapes[sel][i] / 2;
-      nTempField[nCurrentPoint[i].y][nCurrentPoint[i].x] = 1;
-   }
-}
-
-void lockShape()
-{
-   for (int i = 0; i < 4; i++)
-   {
-      nField[nCurrentPoint[i].y][nCurrentPoint[i].x] = nTempField[nCurrentPoint[i].y][nCurrentPoint[i].x];
-   }
-   for (int i = 0; i < nHeight; ++i)
     {
-        for (int j = 0; j < nWidth; ++j)
-        {
-            nTempField[i][j] = nField[i][j];
+        for (int j = 0; j < 4; j++)
+        {  
+            nCurrentPoint[i][j].x = 4+j;
+            nCurrentPoint[i][j].y = 4+i;
+            nTempField[nCurrentPoint[i][j].y][nCurrentPoint[i][j].x]=shapes[sel][i][j];
         }
     }
 }
 
+void lockShape()
+{
+   
+}
+
 //checks field array and prints '. ' if 0 and '# ' if otherwise
-void outputShape(WINDOW *w)
+void outputShape(WINDOW *w, int sel)
 {
    for (int i = 0; i < 4; i++)
    {
-      mvwaddch(w, nCurrentPoint[i].y, nCurrentPoint[i].x*2, '#');
+      for (int j = 0; j < 4; j++)
+      {  
+         (shapes[sel][i][j] == 1) ? (mvwaddch(w, nCurrentPoint[i][j].y, nCurrentPoint[i][j].x*2, '#')) : 0;
+      }
    }
+   
    wrefresh(w);
 }
 
-bool borderCheck()
+bool borderCheck(int shape)
 {
    for (int i = 0; i < 4; i++)
    {
-      if(nCurrentPoint[i].y == nHeight-1 || nCurrentPoint[i].x > nWidth-1 || nCurrentPoint[i].x < 0)
-      {
-         return 1;
+      for (int j = 0; j < 4; j++)
+      {  
+         if((nCurrentPoint[i][j].y == nHeight-1 || nCurrentPoint[i][j].x > nWidth-1 || nCurrentPoint[i][j].x < 0) && shape[i][j] == 1)
+         {
+            return 1;
+         }
       }
    }
    return 0;
@@ -109,9 +143,12 @@ bool collisionCheck()
 {
    for (int i = 0; i < 4; i++)
    {
-      if(nField[nCurrentPoint[i].y][nCurrentPoint[i].x])
-      {
-         return 1;
+      for (int j = 0; j < 4; j++)
+      { 
+         if(nField[nCurrentPoint[i][j].y][nCurrentPoint[i][j].x])
+         {
+            return 1;
+         }
       }
    }
    return 0;
@@ -128,43 +165,32 @@ void input(char press, int sel)
       case 'a': 
          for (int i = 0; i < 4; i++)
          {
-            nCurrentPoint[i].x--;
-            nTempField[nCurrentPoint[i].y][nCurrentPoint[i].x] = 1;
+            for (int j = 0; j < 4; j++)
+            { 
+               nCurrentPoint[i][j].x--;
+            }
          }
          break;
       case 'd':
          for (int i = 0; i < 4; i++)
          {
-            nCurrentPoint[i].x++;
-            nTempField[nCurrentPoint[i].y][nCurrentPoint[i].x] = 1;
+            for (int j = 0; j < 4; j++)
+            { 
+               nCurrentPoint[i][j].x++;
+            }
          }
          break;
       case 's':
          for (int i = 0; i < 4; i++)
          {
-            nCurrentPoint[i].y++;
-            nTempField[nCurrentPoint[i].y][nCurrentPoint[i].x] = 1;
+            for (int j = 0; j < 4; j++)
+            { 
+               nCurrentPoint[i][j].y++;
+            }
          }
          break;
       case 'l':
-         nAxis = nCurrentPoint[1];
-         if(bRotate)
-         {
-            for (int i = 0; i < 4; i++)
-            { 
-               nCurrentPoint[i].x = shapes[sel][i] / 2;
-               nCurrentPoint[i].y = shapes[sel][i] % 2;
-               
-            }
-         }
-         else
-         {
-            for (int i = 0; i < 4; i++)
-            { 
-               nCurrentPoint[i].x = shapes[sel][i] % 2;
-               nCurrentPoint[i].y = shapes[sel][i] / 2;
-            }
-         }
+         
          bRotate = !bRotate;
          break;
 
@@ -205,7 +231,7 @@ int main()
       while(!borderCheck())
       {
          setField(win);
-         outputShape(win);
+         outputShape(win, nCurrentID);
          input(getch(), nCurrentID);
          // //Input: Left, Right, Down, Rotate
          // 
