@@ -16,7 +16,7 @@ const int nHeight = 20;
 int nField[20][10] = {0}; //set field to all zeroes
 int nTempField[20][10] = {0};
 char cKeyPress;
-bool bRotate = 0;
+int iRotate = 0;
 
 
 // Shape implementation [block ID][4 blocks][4 blocks]:
@@ -65,7 +65,7 @@ int dimension[7] = {4, 3, 3, 3, 3, 3, 2};
 struct point
 {
    int x, y;
-}nCurrentPoint[4], nAxis;
+}nCurrentPoint[4], nClonePoint[4];
 
 
 void setField(WINDOW *wCurrent)
@@ -142,6 +142,12 @@ bool borderCheck(int sel)
    return false;
 }
 
+void rotation(int sel)
+{
+   
+}
+     
+
 
 void input(char press, int sel)
 {
@@ -183,16 +189,11 @@ void input(char press, int sel)
       case 's':
          for (int i = 0; i < 4; i++)
          {
-            // if(nCurrentPoint[i].y == nHeight-1)
-            // {
-            //    return;
-            // }
             nCurrentPoint[i].y++;
          }
          break;
       case 'l':
-         
-         bRotate = !bRotate;
+         rotation(sel);
          break;
 
       default:
@@ -227,7 +228,7 @@ int main()
       //LOGIC=======================================
       //spawn peice
       srand(time(NULL));
-      nCurrentID = rand() % 7;
+      nCurrentID = 1; // rand() % 7;
       spawn(nCurrentID);
 
       //Fall sequence
