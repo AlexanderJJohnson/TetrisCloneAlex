@@ -19,7 +19,7 @@ char cKeyPress;
 bool bRotate = 0;
 
 
-// Shape implementation [block ID][4 blocks]:
+// Shape implementation [block ID][4 blocks][4 blocks]:
 int shapes[7][4][4] = 
 {
    //I
@@ -28,18 +28,18 @@ int shapes[7][4][4] =
     {0,0,1,0},
     {0,0,1,0}},
    //Z
-   {{0,0,1,0},
-    {0,1,1,0},
-    {0,1,0,0},
+   {{0,1,0,0},
+    {1,1,0,0},
+    {1,0,0,0},
     {0,0,0,0}},
    //S
-   {{0,1,0,0},
-    {0,1,1,0},
-    {0,0,1,0},
+   {{1,0,0,0},
+    {1,1,0,0},
+    {0,1,0,0},
     {0,0,0,0}},
    //T
    {{0,1,0,0},
-    {0,1,1,0},
+    {1,1,0,0},
     {0,1,0,0},
     {0,0,0,0}},
    //L
@@ -48,22 +48,25 @@ int shapes[7][4][4] =
     {0,1,1,0},
     {0,0,0,0}},
    //J
-   {{0,0,1,0},
-    {0,0,1,0},
-    {0,1,1,0},
+   {{0,1,0,0},
+    {0,1,0,0},
+    {1,1,0,0},
     {0,0,0,0}},
    //O
-   {{0,0,0,0},
-    {0,1,1,0},
-    {0,1,1,0},
+   {{1,1,0,0},
+    {1,1,0,0},
+    {0,0,0,0},
     {0,0,0,0}},
 
 };
 
+int dimension[7] = {4, 3, 3, 3, 3, 3, 2};
+
 struct point
 {
    int x, y;
-}nCurrentPoint[4][4], nAxis;
+}nCurrentPoint[4], nAxis;
+
 
 void setField(WINDOW *wCurrent)
 {
@@ -82,32 +85,38 @@ void setField(WINDOW *wCurrent)
             
         }
     }
-    wrefresh(wCurrent);
+    //wrefresh(wCurrent);
 }
 
 //compute the location of the cells in a selected shape
 void spawn(int sel)
 {
-   // for (int i = 0; i < 4; i++)
-   // {
-   //    nCurrentPoint[i].x = (shapes[sel][i] % 2) + 4;
-   //    nCurrentPoint[i].y = shapes[sel][i] / 2;
-   //    nTempField[nCurrentPoint[i].y][nCurrentPoint[i].x] = 1;
-   // }
-   for (int i = 0; i < 4; i++)
-    {
-        for (int j = 0; j < 4; j++)
-        {  
-            nCurrentPoint[i][j].x = 4+j;
-            nCurrentPoint[i][j].y = 4+i;
-            nTempField[nCurrentPoint[i][j].y][nCurrentPoint[i][j].x]=shapes[sel][i][j];
-        }
+   int nCount = 0;
+   for (int i = 0; i < dimension[sel]; i++)
+   {
+      for (int j = 0; j < dimension[sel]; j++)
+      {  
+         if(shapes[sel][i][j])
+         {
+            nCurrentPoint[nCount].x = j+3;
+            nCurrentPoint[nCount].y = i;
+            nTempField[nCurrentPoint[i].y][nCurrentPoint[i].x]=shapes[sel][i][j];
+            nCount++;
+         }
+      }
     }
 }
 
 void lockShape()
 {
-   
+   for (int i = 0; i < nHeight; i++)
+   {
+      for (int j = 0; j < nWidth; j++)
+      {  
+         nField[i][j] = nTempField[i][j];
+         nTempField[i][j] = nField[i][j];
+      }
+   }
 }
 
 //checks field array and prints '. ' if 0 and '# ' if otherwise
@@ -115,78 +124,70 @@ void outputShape(WINDOW *w, int sel)
 {
    for (int i = 0; i < 4; i++)
    {
-      for (int j = 0; j < 4; j++)
-      {  
-         (shapes[sel][i][j] == 1) ? (mvwaddch(w, nCurrentPoint[i][j].y, nCurrentPoint[i][j].x*2, '#')) : 0;
-      }
+      mvwaddch(w, nCurrentPoint[i].y, nCurrentPoint[i].x*2, '#');
    }
    
    wrefresh(w);
 }
 
-bool borderCheck(int shape)
+bool borderCheck(int sel)
 {
    for (int i = 0; i < 4; i++)
    {
-      for (int j = 0; j < 4; j++)
-      {  
-         if((nCurrentPoint[i][j].y == nHeight-1 || nCurrentPoint[i][j].x > nWidth-1 || nCurrentPoint[i][j].x < 0) && shape[i][j] == 1)
-         {
-            return 1;
-         }
+      if(nCurrentPoint[i].x >= 0 || nCurrentPoint[i].x < nWidth || nCurrentPoint[i].y >= nHeight)
+      {
+         return true;
       }
    }
-   return 0;
+   return false;
 }
 
-bool collisionCheck()
-{
-   for (int i = 0; i < 4; i++)
-   {
-      for (int j = 0; j < 4; j++)
-      { 
-         if(nField[nCurrentPoint[i][j].y][nCurrentPoint[i][j].x])
-         {
-            return 1;
-         }
-      }
-   }
-   return 0;
-}
 
 void input(char press, int sel)
 {
-   if(borderCheck())
-   {
-      return;
-   }
+   bool bCanGo = 1;
    switch(press)
    {
-      case 'a': 
+      case 'a':
          for (int i = 0; i < 4; i++)
          {
-            for (int j = 0; j < 4; j++)
-            { 
-               nCurrentPoint[i][j].x--;
+            if(nCurrentPoint[i].x == 0)
+            {
+               bCanGo = 0;
+            }
+         }
+         if(bCanGo)
+         {
+            for (int i = 0; i < 4; i++)
+            {
+               nCurrentPoint[i].x--;
             }
          }
          break;
-      case 'd':
+      case 'd':         
          for (int i = 0; i < 4; i++)
          {
-            for (int j = 0; j < 4; j++)
-            { 
-               nCurrentPoint[i][j].x++;
+            if(nCurrentPoint[i].x == nWidth-1)
+            {
+               bCanGo = 0;
+            }
+         }
+         if(bCanGo)
+         {
+            for (int i = 0; i < 4; i++)
+            {
+               nCurrentPoint[i].x++;
             }
          }
          break;
       case 's':
          for (int i = 0; i < 4; i++)
          {
-            for (int j = 0; j < 4; j++)
-            { 
-               nCurrentPoint[i][j].y++;
-            }
+            // if(nCurrentPoint[i].y == nHeight-1)
+            // {
+            //    return;
+            // }
+            nCurrentPoint[i].y++;
          }
          break;
       case 'l':
@@ -198,6 +199,7 @@ void input(char press, int sel)
          break;
    }
 }
+
 
 int main()
 {
@@ -227,38 +229,29 @@ int main()
       srand(time(NULL));
       nCurrentID = rand() % 7;
       spawn(nCurrentID);
+
       //Fall sequence
-      while(!borderCheck())
+      while(nCurrentPoint[3].y <= nHeight-1)
       {
          setField(win);
          outputShape(win, nCurrentID);
-         input(getch(), nCurrentID);
-         // //Input: Left, Right, Down, Rotate
-         // 
-         // setField(win);
-         // //fall: nHeight -1
-         // for (int i = 0; i < 4; i++)
-         // {
-         //    if(!borderCheck())
-         //    {
-         //       nCurrentPoint[i].y++;
-         //    }
-         //    outputShape(curwin);
-         //    wrefresh(win);
-         // }
+         input(getch(), nCurrentID);  //Input: Left, Right, Down, Rotate
+         if(!borderCheck(nCurrentID))
+         {
+            break;
+         }
          
          // //check for collision
          
          // napms(nTimer); //(milliseconds)
          // //update
-         // lockShape();
+         
          // mvprintw(30, 30, "ID: %d", nCurrentID);
-      
       //check for lines
       }
          
-
-         
+      //lockShape();
+      
       //============================================      
       
       mvprintw(30, 30, "yeet ");
@@ -273,6 +266,7 @@ int main()
 }
 
 //gcc main.c -lncurses
+//cc -g main.c -lncurses (gcc)
 
 //resources:
 
