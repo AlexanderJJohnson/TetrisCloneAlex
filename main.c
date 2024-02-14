@@ -74,7 +74,11 @@ void setField(WINDOW *wCurrent)
     {
         for (int j = 0; j < nWidth; ++j)
         {  
-            if(nField[i][j])
+            if(nField[i][j] == 2)
+            {
+               mvwaddch(wCurrent, i, j*2, 'X'); 
+            }
+            else if(nField[i][j] == 1)
             {
                mvwaddch(wCurrent, i, j*2, '#'); 
             }
@@ -104,18 +108,14 @@ void spawn(int sel)
             nCount++;
          }
       }
-    }
+   }
 }
 
 void lockShape()
 {
-   for (int i = 0; i < nHeight; i++)
+   for (int i = 0; i < 4; i++)
    {
-      for (int j = 0; j < nWidth; j++)
-      {  
-         nField[i][j] = nTempField[i][j];
-         nTempField[i][j] = nField[i][j];
-      }
+      nField[nCurrentPoint[i].y-1][nCurrentPoint[i].x] = 2;
    }
 }
 
@@ -130,14 +130,15 @@ void outputShape(WINDOW *w, int sel)
    wrefresh(w);
 }
 
-bool borderCheck(int sel)
+bool collided(int sel)
 {
    for (int i = 0; i < 4; i++)
    {
-      if(nCurrentPoint[i].x >= 0 || nCurrentPoint[i].x < nWidth || nCurrentPoint[i].y >= nHeight)
+      if (nField[nCurrentPoint[i].y][nCurrentPoint[i].x] == 2)
       {
          return true;
       }
+      
    }
    return false;
 }
@@ -161,9 +162,16 @@ void rotation(int sel)
       nCurrentPoint[i].x = -nCurrentPoint[i].y + nAnchor.y + nAnchor.x;
       nCurrentPoint[i].y = nTemp - nAnchor.x + nAnchor.y;
    }
+
 }
      
-
+void fall()
+{
+   for (int i = 0; i < 4; i++)
+   {
+      nCurrentPoint[i].y++;
+   }
+}
 
 void input(char press, int sel)
 {
@@ -226,7 +234,7 @@ int main()
 {
    bool bGameOver = 0;
    int nCurrentID = 0;
-   int nTimer = 250;
+   int nTimer = 50;
    bool bRotate = 1;
    
    //clear screen
@@ -235,7 +243,7 @@ int main()
    WINDOW *curwin = newwin(20, 20, 5, 10); //secondary window for only updating the four tiles that will change
    refresh();
    noecho();
-   timeout(50);
+   timeout(25);
 
    //Game loop: for-loop that will run the game
    while (!bGameOver)
@@ -250,10 +258,19 @@ int main()
       srand(time(NULL));
       nCurrentID = rand() % 7;
       spawn(nCurrentID);
+      if (collided(nCurrentID))
+      {
+         bGameOver == true;
+         break;
+      }
 
       //Fall sequence
-      while(nCurrentPoint[3].y <= nHeight-1)
+      while(nCurrentPoint[3].y < nHeight)
       {
+         if (collided(nCurrentID))
+         {
+            break;
+         }
          setField(win);
          outputShape(win, nCurrentID);
          input(getch(), nCurrentID);  //Input: Left, Right, Down, Rotate
@@ -261,14 +278,16 @@ int main()
          
          // //check for collision
          
-         // napms(nTimer); //(milliseconds)
+         napms(nTimer); //(milliseconds)
+         fall();
          // //update
          
          // mvprintw(30, 30, "ID: %d", nCurrentID);
       //check for lines
-      }
          
-      // lockShape();
+      }
+      
+      lockShape();
       
       //============================================      
       
@@ -277,6 +296,8 @@ int main()
       // break;
    }
    
+   printw("GAME OVER :(\n");
+   napms(200);
    endwin();
 
    
