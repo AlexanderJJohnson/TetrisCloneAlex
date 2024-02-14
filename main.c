@@ -65,7 +65,7 @@ int dimension[7] = {4, 3, 3, 3, 3, 3, 2};
 struct point
 {
    int x, y;
-}nCurrentPoint[4], nClonePoint[4];
+}nCurrentPoint[4], nAnchor;
 
 
 void setField(WINDOW *wCurrent)
@@ -144,7 +144,23 @@ bool borderCheck(int sel)
 
 void rotation(int sel)
 {
-   
+   int nTemp = 0;
+   if(sel == 0 || sel == 1 || sel == 2 || sel == 3)
+   {
+      nAnchor.x = nCurrentPoint[2].x;
+      nAnchor.y = nCurrentPoint[2].y;
+   }
+   else if(sel == 4 || sel == 5)
+   {
+      nAnchor.x = nCurrentPoint[1].x;
+      nAnchor.y = nCurrentPoint[1].y;
+   }
+   for (int i = 0; i < 4; i++)
+   {
+      nTemp = nCurrentPoint[i].x;
+      nCurrentPoint[i].x = -nCurrentPoint[i].y + nAnchor.y + nAnchor.x;
+      nCurrentPoint[i].y = nTemp - nAnchor.x + nAnchor.y;
+   }
 }
      
 
@@ -193,6 +209,10 @@ void input(char press, int sel)
          }
          break;
       case 'l':
+         if(sel == 6)
+         {
+            break;
+         }
          rotation(sel);
          break;
 
@@ -228,7 +248,7 @@ int main()
       //LOGIC=======================================
       //spawn peice
       srand(time(NULL));
-      nCurrentID = 1; // rand() % 7;
+      nCurrentID = rand() % 7;
       spawn(nCurrentID);
 
       //Fall sequence
@@ -237,10 +257,7 @@ int main()
          setField(win);
          outputShape(win, nCurrentID);
          input(getch(), nCurrentID);  //Input: Left, Right, Down, Rotate
-         if(!borderCheck(nCurrentID))
-         {
-            break;
-         }
+         
          
          // //check for collision
          
@@ -251,7 +268,7 @@ int main()
       //check for lines
       }
          
-      //lockShape();
+      // lockShape();
       
       //============================================      
       
@@ -269,7 +286,7 @@ int main()
 //gcc main.c -lncurses
 //cc -g main.c -lncurses (gcc)
 
-//resources:
+//resources and inspiration:
 
 //Rotation of matrix:
 //https://www.enjoyalgorithms.com/blog/cr-a-matrix-by-90-degrees-in-an-anticlockwise-direction
@@ -283,3 +300,6 @@ int main()
 //https://www.google.com/search?client=firefox-b-1-d&sca_esv=600142611&sxsrf=ACQVn0_bdoky6AFH1N70A928m0h_Y6k6TA:1705801129395&q=where+do+pieces+spawn+in+tetris&tbm=isch&source=lnms&sa=X&ved=2ahUKEwibsf-yrO2DAxXglGoFHeGdAcIQ0pQJegQICxAB&biw=1920&bih=927&dpr=1#imgrc=s0KJVclVSPe6tM
 //github reference
 //https://github.com/embeddedmz/16-Games/blob/master/01%20Tetris/main.cpp
+
+//Goated rotation technique
+//https://www.youtube.com/watch?v=_lAr7JveRVE
